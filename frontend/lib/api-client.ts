@@ -2,6 +2,8 @@
  * API Client for Donna backend
  */
 
+import { createClient } from "@/lib/supabase/client";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export class ApiError extends Error {
@@ -27,10 +29,22 @@ export async function uploadVoiceRecording(audioBlob: Blob): Promise<{
   const formData = new FormData();
   formData.append("audio", audioBlob, "recording.webm");
 
+  // Get authentication token
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const headers: HeadersInit = {};
+  if (session?.access_token) {
+    headers.Authorization = `Bearer ${session.access_token}`;
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/v1/voice/capture`, {
     method: "POST",
+    headers,
     body: formData,
-    credentials: "include", // Include cookies for authentication
+    credentials: "include",
   });
 
   if (!response.ok) {
