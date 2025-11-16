@@ -146,48 +146,46 @@ export function VoiceRecorder({
   }, [isRecording]);
 
   // Calculate dynamic styles based on state
-  const orbSize = isHolding ? 200 : 160;
-  const glowIntensity = isHolding ? 80 + audioLevel * 40 : 40;
-  const pulseScale = 1 + audioLevel * 0.3;
+  const orbSize = isHolding ? 220 : 180;
+  const glowIntensity = isHolding ? 85 + audioLevel * 15 : 60;
+  const pulseScale = isRecording ? 1 + audioLevel * 0.4 : 1;
 
   return (
     <div className="flex min-h-[500px] flex-col items-center justify-center">
-      {/* Instruction text */}
-      <p className="mb-8 text-center text-sm font-medium text-neutral-600">
-        {isRecording ? "Recording... Release to send" : "Touch and hold to record"}
-      </p>
-
       {/* Orb container */}
-      <div className="relative flex items-center justify-center">
-        {/* Outer glow rings */}
+      <div className="relative flex items-center justify-center animate-float">
+        {/* Outer glow rings - always visible, more intense when recording */}
         <div
-          className={`absolute inset-0 transition-all duration-300 ${
-            isHolding ? "opacity-100" : "opacity-0"
-          }`}
+          className="absolute animate-pulse-glow-outer transition-all duration-500"
           style={{
-            width: orbSize * 1.8,
-            height: orbSize * 1.8,
+            width: orbSize * 2,
+            height: orbSize * 2,
             left: "50%",
             top: "50%",
-            transform: `translate(-50%, -50%) scale(${pulseScale})`,
-          }}
-        >
-          <div className="absolute inset-0 animate-pulse rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20 blur-xl" />
-        </div>
-
-        {/* Middle glow ring */}
-        <div
-          className="absolute transition-all duration-200"
-          style={{
-            width: orbSize * 1.4,
-            height: orbSize * 1.4,
-            left: "50%",
-            top: "50%",
-            transform: `translate(-50%, -50%) scale(${pulseScale})`,
+            transform: `translate(-50%, -50%) scale(${isRecording ? pulseScale * 1.2 : 1})`,
           }}
         >
           <div
-            className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-400/30 to-blue-400/30 blur-2xl"
+            className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500/30 to-blue-500/30 blur-3xl"
+            style={{
+              opacity: isRecording ? 0.8 : 0.4,
+            }}
+          />
+        </div>
+
+        {/* Middle glow ring - always visible */}
+        <div
+          className="absolute animate-pulse-glow transition-all duration-300"
+          style={{
+            width: orbSize * 1.5,
+            height: orbSize * 1.5,
+            left: "50%",
+            top: "50%",
+            transform: `translate(-50%, -50%) scale(${isRecording ? pulseScale : 1})`,
+          }}
+        >
+          <div
+            className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-400/40 to-blue-400/40 blur-2xl"
             style={{ opacity: glowIntensity / 100 }}
           />
         </div>
@@ -199,7 +197,7 @@ export function VoiceRecorder({
           onMouseLeave={handleMouseUp}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className={`relative cursor-pointer select-none rounded-full transition-all duration-200 ${
+          className={`relative cursor-pointer select-none rounded-full transition-all duration-300 ${
             isHolding ? "scale-110" : "scale-100 hover:scale-105"
           }`}
           style={{
@@ -207,103 +205,100 @@ export function VoiceRecorder({
             height: orbSize,
             transform: isRecording ? `scale(${1.1 * pulseScale})` : undefined,
           }}
+          aria-label="Voice recorder"
         >
-          {/* Gradient background */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 opacity-90" />
-
-          {/* Shimmer effect */}
-          <div className="absolute inset-0 overflow-hidden rounded-full">
-            <div
-              className={`absolute -inset-full bg-gradient-to-r from-transparent via-white/30 to-transparent ${
-                isHolding ? "animate-shimmer" : ""
-              }`}
-            />
-          </div>
-
-          {/* Inner glow */}
+          {/* Gradient background with enhanced colors when recording */}
           <div
-            className="absolute inset-4 rounded-full bg-gradient-to-br from-white/40 to-transparent blur-md"
-            style={{ opacity: 0.6 + audioLevel * 0.4 }}
+            className={`absolute inset-0 rounded-full transition-all duration-300 ${
+              isRecording
+                ? "bg-gradient-to-br from-purple-400 via-blue-400 to-cyan-400 opacity-100"
+                : "bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 opacity-90"
+            }`}
           />
 
-          {/* Center icon/indicator */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            {isRecording ? (
-              <div className="flex flex-col items-center gap-2">
-                <div className="h-12 w-12 animate-pulse rounded-full bg-white/90" />
-                <div className="flex gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="w-1 rounded-full bg-white/80"
-                      style={{
-                        height: 8 + audioLevel * 20 * (1 + Math.sin(i) * 0.5),
-                        transition: "height 0.1s ease-out",
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <svg
-                className="h-16 w-16 text-white/90"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                />
-              </svg>
-            )}
+          {/* Shimmer effect - always animating */}
+          <div className="absolute inset-0 overflow-hidden rounded-full">
+            <div
+              className={`absolute -inset-full bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer`}
+              style={{
+                animationDuration: isRecording ? "1.5s" : "3s",
+              }}
+            />
           </div>
 
-          {/* Glass reflection */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/30 via-transparent to-transparent" />
-        </button>
-      </div>
+          {/* Inner glow - pulsates with audio or gentle pulse when idle */}
+          <div
+            className="absolute inset-4 rounded-full bg-gradient-to-br from-white/50 to-transparent blur-md transition-opacity duration-200"
+            style={{ opacity: isRecording ? 0.7 + audioLevel * 0.3 : 0.5 }}
+          />
 
-      {/* Status indicator */}
-      {isRecording && (
-        <div className="mt-8 flex items-center gap-2">
-          <div className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
-          <span className="text-sm font-medium text-neutral-700">Recording</span>
-        </div>
-      )}
-
-      {/* Upload status */}
-      {isUploading && uploadStatus === "idle" && (
-        <div className="mt-8 flex items-center gap-2">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-300 border-t-blue-500" />
-          <span className="text-sm font-medium text-neutral-700">Uploading...</span>
-        </div>
-      )}
-
-      {uploadStatus === "success" && (
-        <div className="mt-8 flex items-center gap-2">
-          <svg className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-          <span className="text-sm font-medium text-green-700">Uploaded successfully!</span>
-        </div>
-      )}
-
-      {uploadStatus === "error" && (
-        <div className="mt-8 flex items-center gap-2">
-          <svg className="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
+          {/* Center core - pulsing dot */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div
+              className={`rounded-full bg-white transition-all duration-200 ${
+                isRecording ? "animate-pulse" : ""
+              }`}
+              style={{
+                width: isRecording ? 16 + audioLevel * 24 : 12,
+                height: isRecording ? 16 + audioLevel * 24 : 12,
+                opacity: isRecording ? 0.9 : 0.7,
+                boxShadow: isRecording
+                  ? `0 0 ${20 + audioLevel * 30}px rgba(255, 255, 255, 0.8)`
+                  : "0 0 15px rgba(255, 255, 255, 0.5)",
+              }}
             />
-          </svg>
-          <span className="text-sm font-medium text-red-700">Upload failed. Please try again.</span>
-        </div>
-      )}
+          </div>
+
+          {/* Audio visualization bars - only when recording */}
+          {isRecording && (
+            <div className="absolute inset-0 flex items-center justify-center gap-1">
+              {[...Array(7)].map((_, i) => {
+                const offset = (i - 3) * 30; // Spread bars in a circle
+                const angle = (offset * Math.PI) / 180;
+                const distance = 50 + audioLevel * 20;
+                return (
+                  <div
+                    key={i}
+                    className="absolute w-1 rounded-full bg-white/60"
+                    style={{
+                      height: 4 + audioLevel * 25 * (1 + Math.sin(Date.now() / 200 + i) * 0.3),
+                      transform: `translate(${Math.sin(angle) * distance}px, ${Math.cos(angle) * distance}px)`,
+                      transition: "height 0.1s ease-out",
+                    }}
+                  />
+                );
+              })}
+            </div>
+          )}
+
+          {/* Glass reflection - always visible */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/30 via-transparent to-transparent" />
+
+          {/* Subtle ring highlight */}
+          <div
+            className="absolute inset-0 rounded-full transition-all duration-300"
+            style={{
+              boxShadow: isRecording
+                ? `inset 0 0 30px rgba(255, 255, 255, ${0.3 + audioLevel * 0.3})`
+                : "inset 0 0 20px rgba(255, 255, 255, 0.2)",
+            }}
+          />
+        </button>
+
+        {/* Upload success indicator - subtle glow ring */}
+        {uploadStatus === "success" && (
+          <div className="absolute inset-0 animate-pulse" style={{ width: orbSize * 2.5, height: orbSize * 2.5 }}>
+            <div className="absolute inset-0 rounded-full border-4 border-green-400/50 blur-sm" />
+          </div>
+        )}
+
+        {/* Upload error indicator - subtle glow ring */}
+        {uploadStatus === "error" && (
+          <div className="absolute inset-0 animate-pulse" style={{ width: orbSize * 2.5, height: orbSize * 2.5 }}>
+            <div className="absolute inset-0 rounded-full border-4 border-red-400/50 blur-sm" />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
