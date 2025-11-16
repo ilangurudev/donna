@@ -1,0 +1,13 @@
+{
+  "frontend/**/*.{js,jsx,ts,tsx}": [
+    "pnpm --filter frontend eslint --fix",
+    "pnpm --filter frontend prettier --write"
+  ],
+  "frontend/**/*.{json,css,md}": [
+    "pnpm --filter frontend prettier --write"
+  ],
+  "backend/**/*.py": [
+    "cd backend && uv run ruff check --fix",
+    "cd backend && uv run ruff format"
+  ]
+}

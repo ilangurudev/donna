@@ -77,3 +77,16 @@ logs/
 # OS
 Thumbs.db
 .DS_Store
+
+.env
+
+# Node.js / Frontend
+node_modules/
+.next/
+.turbo/
+out/
+build/
+dist/
+*.tsbuildinfo
+.vercel
+.pnpm-debug.log*

@@ -1,0 +1,19 @@
+{
+  "name": "donna",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Donna - AI-Native Life Operating System",
+  "scripts": {
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:backend": "cd backend && uv run uvicorn donna.main:app --reload",
+    "build:frontend": "pnpm --filter frontend build",
+    "lint:frontend": "pnpm --filter frontend lint",
+    "format:frontend": "pnpm --filter frontend format",
+    "type-check:frontend": "pnpm --filter frontend type-check",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2"
+  }
+}
