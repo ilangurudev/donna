@@ -60,23 +60,6 @@ describe("GlowyOrb", () => {
       expect(orb).toBeInTheDocument();
     });
 
-    it("should render in idle state with 3D transform", () => {
-      const { container } = renderWithProviders(<GlowyOrb />);
-
-      const orb = screen.getByRole("button", { name: /hold to speak/i });
-      expect(orb).toBeInTheDocument();
-      // Verify container structure exists
-      expect(container).toBeInTheDocument();
-    });
-
-    it("should have glass-like appearance with smoke effect", () => {
-      const { container } = renderWithProviders(<GlowyOrb />);
-
-      // Verify the orb has the expected structure for glass/smoke effects
-      const orb = screen.getByRole("button", { name: /hold to speak/i });
-      expect(orb).toBeInTheDocument();
-      expect(container.querySelector('[class*="rotate"]')).toBeTruthy();
-    });
   });
 
   describe("Mouse Interaction", () => {
@@ -381,37 +364,6 @@ describe("GlowyOrb", () => {
     });
   });
 
-  describe("Visual Effects", () => {
-    it("should apply 3D transform on the orb", () => {
-      const { container } = renderWithProviders(<GlowyOrb />);
-
-      const orb = screen.getByRole("button", { name: /hold to speak/i });
-      expect(orb).toBeInTheDocument();
-      // Verify 3D transforms are applied via CSS
-      expect(container).toBeInTheDocument();
-    });
-
-    it("should intensify glow when recording", async () => {
-      const user = userEvent.setup({ delay: null });
-      const { container } = renderWithProviders(<GlowyOrb />);
-
-      const orb = screen.getByRole("button", { name: /hold to speak/i });
-      await user.pointer({ target: orb, keys: "[MouseLeft>]" });
-
-      await waitFor(() => {
-        expect(container).toBeInTheDocument();
-      });
-    });
-
-    it("should show purple, pink, and blue colors in the smoke", () => {
-      const { container } = renderWithProviders(<GlowyOrb />);
-
-      const orb = screen.getByRole("button", { name: /hold to speak/i });
-      expect(orb).toBeInTheDocument();
-      // Component should have gradient with purple, pink, blue colors
-      expect(container).toBeInTheDocument();
-    });
-  });
 
   describe("Error Handling", () => {
     it("should handle microphone permission denied", async () => {
@@ -543,6 +495,93 @@ describe("GlowyOrb", () => {
       });
 
       consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe("Greeting Message", () => {
+    const VALID_GREETINGS = [
+      "Hello",
+      "Hola",
+      "Bonjour",
+      "Ciao",
+      "Hallo",
+      "Olá",
+      "Konnichiwa",
+      "Namaste",
+      "Annyeong",
+    ];
+
+    it("should display greeting message without firstName", () => {
+      renderWithProviders(<GlowyOrb />);
+
+      const greeting = screen.getByText(/welcome to Donna!/i);
+      expect(greeting).toBeInTheDocument();
+    });
+
+    it("should display greeting message with firstName", () => {
+      renderWithProviders(<GlowyOrb firstName="Alice" />);
+
+      const heading = screen.getByRole("heading", { level: 1 });
+      expect(heading.textContent).toContain("Alice");
+      expect(heading.textContent).toContain("welcome to Donna!");
+    });
+
+    it("should display one of the valid greetings", () => {
+      const { container } = renderWithProviders(<GlowyOrb />);
+
+      const heading = container.querySelector("h1");
+      expect(heading).toBeInTheDocument();
+
+      const headingText = heading?.textContent || "";
+      const hasValidGreeting = VALID_GREETINGS.some((greeting) =>
+        headingText.includes(greeting)
+      );
+
+      expect(hasValidGreeting).toBe(true);
+    });
+
+    it("should include welcome message with greeting", () => {
+      renderWithProviders(<GlowyOrb />);
+
+      // The full message should be present
+      const welcomeText = screen.getByText((content, element) => {
+        return (
+          element?.tagName.toLowerCase() === "h1" &&
+          content.includes("welcome to Donna!")
+        );
+      });
+
+      expect(welcomeText).toBeInTheDocument();
+    });
+
+    it("should display firstName followed by comma when provided", () => {
+      renderWithProviders(<GlowyOrb firstName="Bob" />);
+
+      const heading = screen.getByRole("heading", { level: 1 });
+      expect(heading.textContent).toMatch(/Bob,\s*welcome to Donna!/);
+    });
+
+    it("should not display comma when firstName is not provided", () => {
+      renderWithProviders(<GlowyOrb />);
+
+      const heading = screen.getByRole("heading", { level: 1 });
+      // Should not have a comma before "welcome"
+      expect(heading.textContent).not.toMatch(/,\s*welcome to Donna!/);
+    });
+
+    it("should display greeting in large font", () => {
+      const { container } = renderWithProviders(<GlowyOrb />);
+
+      const heading = container.querySelector("h1");
+      expect(heading).toHaveClass("text-6xl");
+    });
+
+    it("should render greeting as h1 heading", () => {
+      renderWithProviders(<GlowyOrb firstName="Charlie" />);
+
+      const heading = screen.getByRole("heading", { level: 1 });
+      expect(heading).toBeInTheDocument();
+      expect(heading.textContent).toContain("welcome to Donna!");
     });
   });
 });
