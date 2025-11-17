@@ -1,6 +1,9 @@
 """Main FastAPI application."""
 
-from fastapi import Depends, FastAPI
+from datetime import datetime
+from pathlib import Path
+
+from fastapi import Depends, FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from donna.auth import get_current_user
@@ -48,3 +51,48 @@ async def get_me(current_user: dict = Depends(get_current_user)):
             "role": current_user["role"],
         }
     }
+
+
+@app.post("/api/v1/voice/capture")
+async def capture_voice(
+    audio: UploadFile = File(...), current_user: dict = Depends(get_current_user)
+):
+    """
+    Capture and process voice recording.
+
+    This endpoint receives audio recordings from the frontend,
+    saves them temporarily, and will process them with AI for natural language capture.
+    """
+    try:
+        # Create recordings directory if it doesn't exist
+        recordings_dir = Path("data/recordings")
+        recordings_dir.mkdir(parents=True, exist_ok=True)
+
+        # Generate unique filename with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        user_id = current_user["id"]
+        filename = f"{user_id}_{timestamp}.webm"
+        file_path = recordings_dir / filename
+
+        # Save the audio file
+        content = await audio.read()
+        with open(file_path, "wb") as f:
+            f.write(content)
+
+        # TODO: Process audio with speech-to-text (Whisper API)
+        # TODO: Extract structured data (tasks, projects, people, deadlines) with AI
+        # TODO: Save to markdown files in user's data directory
+
+        return {
+            "success": True,
+            "message": "Voice recording captured successfully",
+            "filename": filename,
+            "size": len(content),
+            "timestamp": timestamp,
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"Failed to process recording: {str(e)}",
+        }
