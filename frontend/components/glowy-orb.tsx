@@ -1,20 +1,39 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 
 import { uploadVoiceRecording } from "@/lib/api-client";
 
 interface GlowyOrbProps {
+  firstName?: string;
   onRecordingComplete?: (audioBlob: Blob) => void;
   onUploadSuccess?: (response: { filename?: string; size?: number }) => void;
   onUploadError?: (error: Error) => void;
 }
 
+const GREETINGS = [
+  "Hello",
+  "Hola",
+  "Bonjour",
+  "Ciao",
+  "Hallo",
+  "Olá",
+  "Konnichiwa",
+  "Namaste",
+  "Annyeong",
+];
+
 export function GlowyOrb({
+  firstName,
   onRecordingComplete,
   onUploadSuccess,
   onUploadError,
 }: GlowyOrbProps) {
+  // Randomly select a greeting on component mount
+  const greeting = useMemo(() => {
+    return GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+  }, []);
+
   const [isRecording, setIsRecording] = useState(false);
   const [isHolding, setIsHolding] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
@@ -182,7 +201,15 @@ export function GlowyOrb({
   const pulseScale = isRecording ? 1 + audioLevel * 0.15 : 1;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
+      {/* Greeting message */}
+      <div className="mb-16 text-center">
+        <h1 className="text-6xl font-light tracking-wide text-white">
+          {greeting} {firstName && <span className="font-normal">{firstName}</span>}
+          {firstName && ", "}welcome to Donna!
+        </h1>
+      </div>
+
       {/* 3D perspective container */}
       <div className="relative" style={{ perspective: "1000px" }}>
         {/* Outer glow layers - multiple rings for depth */}
@@ -371,6 +398,13 @@ export function GlowyOrb({
             <div className="absolute inset-0 rounded-full border-4 border-red-400/60 blur-sm" />
           </div>
         )}
+      </div>
+
+      {/* Instructions */}
+      <div className="mt-12 text-center">
+        <p className="text-sm font-light text-white/70">
+          Click and hold or press space and hold to speak
+        </p>
       </div>
     </div>
   );
