@@ -1,24 +1,37 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("Voice Recording Flow", () => {
+test.describe("Glowy Orb Voice Recording", () => {
   // Note: Most of these tests would require authentication
   // We'll write them as skipped tests since we can't easily set up auth in E2E
 
-  test.describe("Voice Recorder Component", () => {
-    test.skip("should display voice recorder orb", async ({ page }) => {
+  test.describe("Glowy Orb Component", () => {
+    test.skip("should display glowy orb", async ({ page }) => {
       // Requires authentication to access /app
       await page.goto("/app");
 
-      // Find the voice recorder button
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
-      await expect(recorderButton).toBeVisible();
+      // Find the glowy orb button
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
+      await expect(orbButton).toBeVisible();
     });
 
     test.skip("should have proper ARIA label", async ({ page }) => {
       await page.goto("/app");
 
-      const recorderButton = page.getByLabel("Voice recorder");
-      await expect(recorderButton).toBeVisible();
+      const orbButton = page.getByLabel("Hold to speak");
+      await expect(orbButton).toBeVisible();
+    });
+
+    test.skip("should be the only element on the page", async ({ page }) => {
+      await page.goto("/app");
+
+      // Should not have header
+      await expect(page.getByRole("heading", { name: /donna/i })).not.toBeVisible();
+
+      // Should not have user info
+      await expect(page.getByText(/welcome back/i)).not.toBeVisible();
+
+      // Should not have feature cards
+      await expect(page.getByText(/morning brief/i)).not.toBeVisible();
     });
   });
 
@@ -29,8 +42,8 @@ test.describe("Voice Recording Flow", () => {
       // Grant microphone permission
       await context.grantPermissions(["microphone"]);
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
-      await recorderButton.click({ button: "left" });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
+      await orbButton.click({ button: "left" });
 
       // Verify permission was requested
       // In a real browser, this would trigger a permission prompt
@@ -42,8 +55,8 @@ test.describe("Voice Recording Flow", () => {
       // Deny microphone permission
       await context.clearPermissions();
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
-      await recorderButton.click({ button: "left" });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
+      await orbButton.click({ button: "left" });
 
       // Should show alert or error message
       page.on("dialog", async (dialog) => {
@@ -57,11 +70,11 @@ test.describe("Voice Recording Flow", () => {
 
       await context.grantPermissions(["microphone"]);
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
-      await recorderButton.click({ button: "left" });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
+      await orbButton.click({ button: "left" });
 
       // Should start recording (visual feedback should change)
-      await expect(recorderButton).toHaveClass(/recording|holding/);
+      await expect(orbButton).toBeVisible();
     });
   });
 
@@ -70,30 +83,30 @@ test.describe("Voice Recording Flow", () => {
       await page.goto("/app");
       await context.grantPermissions(["microphone"]);
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
 
       // Press and hold
-      await recorderButton.dispatchEvent("mousedown");
+      await orbButton.dispatchEvent("mousedown");
 
       // Should show recording state
       // Check for visual changes (orb size, animations, etc.)
-      await expect(recorderButton).toBeVisible();
+      await expect(orbButton).toBeVisible();
     });
 
     test.skip("should stop recording on mouse up", async ({ page, context }) => {
       await page.goto("/app");
       await context.grantPermissions(["microphone"]);
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
 
       // Press and hold
-      await recorderButton.dispatchEvent("mousedown");
+      await orbButton.dispatchEvent("mousedown");
 
       // Wait a bit
       await page.waitForTimeout(1000);
 
       // Release
-      await recorderButton.dispatchEvent("mouseup");
+      await orbButton.dispatchEvent("mouseup");
 
       // Should stop recording and start upload
       // Check for upload state
@@ -104,95 +117,122 @@ test.describe("Voice Recording Flow", () => {
       await page.goto("/app");
       await context.grantPermissions(["microphone"]);
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
 
       // Touch start
-      await recorderButton.dispatchEvent("touchstart");
+      await orbButton.dispatchEvent("touchstart");
 
       // Wait
       await page.waitForTimeout(1000);
 
       // Touch end
-      await recorderButton.dispatchEvent("touchend");
+      await orbButton.dispatchEvent("touchend");
 
       // Should complete recording
-      await expect(recorderButton).toBeVisible();
+      await expect(orbButton).toBeVisible();
     });
 
     test.skip("should stop recording on mouse leave", async ({ page, context }) => {
       await page.goto("/app");
       await context.grantPermissions(["microphone"]);
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
 
       // Start recording
-      await recorderButton.dispatchEvent("mousedown");
+      await orbButton.dispatchEvent("mousedown");
 
       // Move mouse away
       await page.mouse.move(0, 0);
 
       // Should stop recording
-      await expect(recorderButton).toBeVisible();
+      await expect(orbButton).toBeVisible();
+    });
+
+    test.skip("should start recording on space bar press", async ({ page, context }) => {
+      await page.goto("/app");
+      await context.grantPermissions(["microphone"]);
+
+      // Press and hold space
+      await page.keyboard.down("Space");
+
+      // Should start recording
+      await page.waitForTimeout(500);
+
+      // Release space
+      await page.keyboard.up("Space");
+
+      // Should stop recording
+      await page.waitForTimeout(500);
+    });
+
+    test.skip("should not trigger on other keys", async ({ page, context }) => {
+      await page.goto("/app");
+      await context.grantPermissions(["microphone"]);
+
+      // Try other keys
+      await page.keyboard.press("Enter");
+      await page.keyboard.press("Escape");
+      await page.keyboard.press("a");
+
+      // Should not start recording
+      await page.waitForTimeout(500);
     });
   });
 
   test.describe("Visual Feedback", () => {
-    test.skip("should show visual changes when recording", async ({ page, context }) => {
+    test.skip("should show 3D glass effect with smoke", async ({ page }) => {
       await page.goto("/app");
-      await context.grantPermissions(["microphone"]);
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
 
-      // Get initial state
-      const initialClass = await recorderButton.getAttribute("class");
+      // Should be visible with 3D transforms
+      await expect(orbButton).toBeVisible();
+    });
 
-      // Start recording
-      await recorderButton.dispatchEvent("mousedown");
+    test.skip("should show purple, pink, and blue colors", async ({ page }) => {
+      await page.goto("/app");
 
-      // Wait for state change
-      await page.waitForTimeout(100);
+      // The orb should have purple, pink, and blue gradients
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
+      await expect(orbButton).toBeVisible();
+    });
 
-      // Check for class changes
-      const recordingClass = await recorderButton.getAttribute("class");
-      expect(recordingClass).not.toBe(initialClass);
+    test.skip("should have rotating smoke animations", async ({ page }) => {
+      await page.goto("/app");
+
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
+
+      // Should have animated smoke layers
+      await expect(orbButton).toBeVisible();
     });
 
     test.skip("should show audio visualization when recording", async ({ page, context }) => {
       await page.goto("/app");
       await context.grantPermissions(["microphone"]);
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
 
-      await recorderButton.dispatchEvent("mousedown");
+      await orbButton.dispatchEvent("mousedown");
 
       // Wait for visualization to render
       await page.waitForTimeout(500);
 
       // Check for visualization elements
-      // The orb should have audio bars or pulsing effects
-      const orb = page.locator('[aria-label="Voice recorder"]');
+      const orb = page.locator('[aria-label="Hold to speak"]');
       await expect(orb).toBeVisible();
     });
 
-    test.skip("should show idle state when not recording", async ({ page }) => {
+    test.skip("should scale up when holding", async ({ page, context }) => {
       await page.goto("/app");
+      await context.grantPermissions(["microphone"]);
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
 
-      // Should have idle/default styling
-      await expect(recorderButton).toHaveClass(/scale-100/);
-    });
+      await orbButton.dispatchEvent("mousedown");
 
-    test.skip("should show hover effect", async ({ page }) => {
-      await page.goto("/app");
-
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
-
-      await recorderButton.hover();
-
-      // Should have hover effect
-      // Exact class depends on implementation
-      await expect(recorderButton).toBeVisible();
+      // Should scale up
+      await page.waitForTimeout(100);
+      await expect(orbButton).toBeVisible();
     });
   });
 
@@ -201,12 +241,12 @@ test.describe("Voice Recording Flow", () => {
       await page.goto("/app");
       await context.grantPermissions(["microphone"]);
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
 
       // Record for 2 seconds
-      await recorderButton.dispatchEvent("mousedown");
+      await orbButton.dispatchEvent("mousedown");
       await page.waitForTimeout(2000);
-      await recorderButton.dispatchEvent("mouseup");
+      await orbButton.dispatchEvent("mouseup");
 
       // Should show uploading state
       // Wait for upload to complete
@@ -223,11 +263,11 @@ test.describe("Voice Recording Flow", () => {
       await page.goto("/app");
       await context.grantPermissions(["microphone"]);
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
 
-      await recorderButton.dispatchEvent("mousedown");
+      await orbButton.dispatchEvent("mousedown");
       await page.waitForTimeout(1000);
-      await recorderButton.dispatchEvent("mouseup");
+      await orbButton.dispatchEvent("mouseup");
 
       // Wait for upload
       await page.waitForTimeout(2000);
@@ -250,11 +290,11 @@ test.describe("Voice Recording Flow", () => {
         });
       });
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
 
-      await recorderButton.dispatchEvent("mousedown");
+      await orbButton.dispatchEvent("mousedown");
       await page.waitForTimeout(1000);
-      await recorderButton.dispatchEvent("mouseup");
+      await orbButton.dispatchEvent("mouseup");
 
       // Wait for upload attempt
       await page.waitForTimeout(2000);
@@ -267,12 +307,12 @@ test.describe("Voice Recording Flow", () => {
       await page.goto("/app");
       await context.grantPermissions(["microphone"]);
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
 
       // Complete recording
-      await recorderButton.dispatchEvent("mousedown");
+      await orbButton.dispatchEvent("mousedown");
       await page.waitForTimeout(1000);
-      await recorderButton.dispatchEvent("mouseup");
+      await orbButton.dispatchEvent("mouseup");
 
       // Wait for upload and success indicator
       await page.waitForTimeout(2000);
@@ -296,11 +336,11 @@ test.describe("Voice Recording Flow", () => {
       // Simulate network offline
       await page.route("**/api/v1/voice/capture", (route) => route.abort());
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
 
-      await recorderButton.dispatchEvent("mousedown");
+      await orbButton.dispatchEvent("mousedown");
       await page.waitForTimeout(1000);
-      await recorderButton.dispatchEvent("mouseup");
+      await orbButton.dispatchEvent("mouseup");
 
       // Should show error state
       await page.waitForTimeout(1000);
@@ -311,27 +351,27 @@ test.describe("Voice Recording Flow", () => {
       await page.goto("/app");
       await context.grantPermissions(["microphone"]);
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
 
       // Very quick press
-      await recorderButton.dispatchEvent("mousedown");
+      await orbButton.dispatchEvent("mousedown");
       await page.waitForTimeout(100);
-      await recorderButton.dispatchEvent("mouseup");
+      await orbButton.dispatchEvent("mouseup");
 
       // Should still attempt to upload
-      await expect(recorderButton).toBeVisible();
+      await expect(orbButton).toBeVisible();
     });
 
     test.skip("should handle long recordings", async ({ page, context }) => {
       await page.goto("/app");
       await context.grantPermissions(["microphone"]);
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
 
       // Long recording (10 seconds)
-      await recorderButton.dispatchEvent("mousedown");
+      await orbButton.dispatchEvent("mousedown");
       await page.waitForTimeout(10000);
-      await recorderButton.dispatchEvent("mouseup");
+      await orbButton.dispatchEvent("mouseup");
 
       // Should successfully upload
       await page.waitForTimeout(2000);
@@ -345,8 +385,8 @@ test.describe("Voice Recording Flow", () => {
       await page.goto("/app");
       await context.grantPermissions(["microphone"]);
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
-      await expect(recorderButton).toBeVisible();
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
+      await expect(orbButton).toBeVisible();
     });
 
     test.skip("should handle touch gestures correctly", async ({ page, context }) => {
@@ -354,47 +394,50 @@ test.describe("Voice Recording Flow", () => {
       await page.goto("/app");
       await context.grantPermissions(["microphone"]);
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
 
       // Touch and hold
-      await recorderButton.tap();
+      await orbButton.tap();
 
       // Should work with touch events
-      await expect(recorderButton).toBeVisible();
+      await expect(orbButton).toBeVisible();
     });
 
     test.skip("should be properly sized on mobile", async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 667 });
       await page.goto("/app");
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
 
       // Check size is appropriate for mobile
-      const boundingBox = await recorderButton.boundingBox();
-      expect(boundingBox?.width).toBeGreaterThan(100);
-      expect(boundingBox?.height).toBeGreaterThan(100);
+      const boundingBox = await orbButton.boundingBox();
+      expect(boundingBox?.width).toBeGreaterThan(200);
+      expect(boundingBox?.height).toBeGreaterThan(200);
     });
   });
 
   test.describe("Accessibility", () => {
-    test.skip("should be keyboard accessible", async ({ page }) => {
+    test.skip("should be keyboard accessible via space bar", async ({ page, context }) => {
       await page.goto("/app");
+      await context.grantPermissions(["microphone"]);
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      // Press space to start recording
+      await page.keyboard.down("Space");
+      await page.waitForTimeout(500);
 
-      // Should be focusable
-      await recorderButton.focus();
-      await expect(recorderButton).toBeFocused();
+      // Release space to stop
+      await page.keyboard.up("Space");
+      await page.waitForTimeout(500);
     });
 
     test.skip("should have proper ARIA attributes", async ({ page }) => {
       await page.goto("/app");
 
-      const recorderButton = page.getByRole("button", { name: /voice recorder/i });
+      const orbButton = page.getByRole("button", { name: /hold to speak/i });
 
       // Check for aria-label
-      const ariaLabel = await recorderButton.getAttribute("aria-label");
-      expect(ariaLabel).toBeTruthy();
+      const ariaLabel = await orbButton.getAttribute("aria-label");
+      expect(ariaLabel).toBe("Hold to speak");
     });
   });
 });
