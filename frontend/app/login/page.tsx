@@ -52,7 +52,7 @@ export default async function LoginPage() {
         </div>
 
         <p className="mt-4 text-center text-xs text-neutral-500">
-          By continuing, you agree to Donna's Terms of Service and Privacy Policy
+          By continuing, you agree to Donna&apos;s Terms of Service and Privacy Policy
         </p>
       </div>
     </div>
