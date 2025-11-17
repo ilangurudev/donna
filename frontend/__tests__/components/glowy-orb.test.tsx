@@ -168,7 +168,7 @@ describe("GlowyOrb", () => {
       });
     });
 
-    it.skip("should stop recording on space bar up", async () => {
+    it("should stop recording on space bar up", async () => {
       const onRecordingComplete = vi.fn();
       renderWithProviders(<GlowyOrb onRecordingComplete={onRecordingComplete} />);
 
@@ -180,16 +180,18 @@ describe("GlowyOrb", () => {
         expect(mocks.getUserMedia).toHaveBeenCalled();
       });
 
-      // Wait a bit for MediaRecorder to be initialized and started
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      // Wait for MediaRecorder to be initialized and started
+      // The mock uses queueMicrotask, so we need to wait for that
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
-      // Stop recording
+      // Stop recording by releasing space
       const keyUpEvent = new KeyboardEvent("keyup", { code: "Space", bubbles: true });
       document.dispatchEvent(keyUpEvent);
 
+      // Should complete recording and call the callback
       await waitFor(() => {
         expect(onRecordingComplete).toHaveBeenCalled();
-      });
+      }, { timeout: 2000 });
     });
 
     it("should not trigger recording on other keys", async () => {
@@ -230,6 +232,76 @@ describe("GlowyOrb", () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       expect(mocks.getUserMedia).not.toHaveBeenCalled();
+    });
+
+    it("should prevent starting multiple recordings if space is pressed multiple times", async () => {
+      renderWithProviders(<GlowyOrb />);
+
+      // Press space first time
+      const keyDownEvent1 = new KeyboardEvent("keydown", { code: "Space", bubbles: true });
+      document.dispatchEvent(keyDownEvent1);
+
+      await waitFor(() => {
+        expect(mocks.getUserMedia).toHaveBeenCalledTimes(1);
+      });
+
+      // Wait for MediaRecorder to be initialized
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Press space again while already recording (should not start new recording)
+      const keyDownEvent2 = new KeyboardEvent("keydown", { code: "Space", bubbles: true });
+      document.dispatchEvent(keyDownEvent2);
+
+      // Wait a bit to ensure no additional calls were made
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Should still only have been called once
+      expect(mocks.getUserMedia).toHaveBeenCalledTimes(1);
+    });
+
+    it("should stop recording even if React state is stale (checks MediaRecorder state directly)", async () => {
+      const onRecordingComplete = vi.fn();
+      renderWithProviders(<GlowyOrb onRecordingComplete={onRecordingComplete} />);
+
+      // Start recording via keyboard
+      const keyDownEvent = new KeyboardEvent("keydown", { code: "Space", bubbles: true });
+      document.dispatchEvent(keyDownEvent);
+
+      await waitFor(() => {
+        expect(mocks.getUserMedia).toHaveBeenCalled();
+      });
+
+      // Wait for MediaRecorder to be initialized and started
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Stop recording via keyboard - this should work even if React state is stale
+      // because the handler checks MediaRecorder.state directly
+      const keyUpEvent = new KeyboardEvent("keyup", { code: "Space", bubbles: true });
+      document.dispatchEvent(keyUpEvent);
+
+      // Should complete successfully by checking MediaRecorder state directly
+      await waitFor(() => {
+        expect(onRecordingComplete).toHaveBeenCalled();
+      }, { timeout: 2000 });
+    });
+
+    it("should handle rapid space key press and release", async () => {
+      const onRecordingComplete = vi.fn();
+      renderWithProviders(<GlowyOrb onRecordingComplete={onRecordingComplete} />);
+
+      // Rapidly press and release space
+      const keyDownEvent = new KeyboardEvent("keydown", { code: "Space", bubbles: true });
+      const keyUpEvent = new KeyboardEvent("keyup", { code: "Space", bubbles: true });
+
+      document.dispatchEvent(keyDownEvent);
+      // Small delay to allow recording to start
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      document.dispatchEvent(keyUpEvent);
+
+      // Should complete recording cycle
+      await waitFor(() => {
+        expect(onRecordingComplete).toHaveBeenCalled();
+      }, { timeout: 2000 });
     });
   });
 

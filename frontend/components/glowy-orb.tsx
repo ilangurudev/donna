@@ -126,7 +126,7 @@ export function GlowyOrb({
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
@@ -160,7 +160,12 @@ export function GlowyOrb({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === "Space" && !isKeyHolding) {
+        // Prevent default scrolling behavior
         e.preventDefault();
+        // Prevent starting if already recording
+        if (mediaRecorderRef.current?.state === "recording") {
+          return;
+        }
         isKeyHolding = true;
         setIsHolding(true);
         startRecording();
@@ -172,7 +177,11 @@ export function GlowyOrb({
         e.preventDefault();
         isKeyHolding = false;
         setIsHolding(false);
-        stopRecording();
+        // Stop recording by checking MediaRecorder state directly (avoids stale closure)
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+          mediaRecorderRef.current.stop();
+          setIsRecording(false);
+        }
       }
     };
 
