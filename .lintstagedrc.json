@@ -3,6 +3,9 @@
     "pnpm --filter frontend eslint --fix",
     "pnpm --filter frontend prettier --write"
   ],
+  "frontend/**/*.{test,spec}.{ts,tsx}": [
+    "pnpm --filter frontend test --run --changed"
+  ],
   "frontend/**/*.{json,css,md}": [
     "pnpm --filter frontend prettier --write"
   ],

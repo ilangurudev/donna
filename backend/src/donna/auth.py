@@ -30,7 +30,10 @@ def get_current_user(
     if not settings.SUPABASE_JWT_SECRET:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="JWT secret not configured. Please set SUPABASE_JWT_SECRET environment variable.",
+            detail=(
+                "JWT secret not configured. "
+                "Please set SUPABASE_JWT_SECRET environment variable."
+            ),
         )
 
     try:
@@ -64,24 +67,27 @@ def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
-        )
+        ) from None
     except jwt.InvalidAudienceError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token: audience mismatch. Expected 'authenticated'",
-        )
+        ) from None
     except jwt.InvalidSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token: signature verification failed. Check SUPABASE_JWT_SECRET",
-        )
+            detail=(
+                "Invalid token: signature verification failed. "
+                "Check SUPABASE_JWT_SECRET"
+            ),
+        ) from None
     except jwt.DecodeError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid token: decode error - {str(e)}",
-        )
+        ) from e
     except jwt.InvalidTokenError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid token: {str(e)}",
-        )
+        ) from e

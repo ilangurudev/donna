@@ -1,13 +1,7 @@
 # Donna Frontend Architecture
 
-## Tech Stack
-- **Framework**: Next.js 16 (App Router), React 19, TypeScript 5 (strict)
-- **Styling**: Tailwind CSS 4, shadcn/ui (Radix primitives)
-- **State**: TanStack Query v5 (server state), React state (UI state)
-- **Forms**: React Hook Form + Zod validation
-- **Auth**: Supabase Auth (Google OAuth, SSR with cookies)
-- **Testing**: Vitest + Playwright + MSW
-- **DX**: ESLint, Prettier (auto-import sort), Husky pre-commit hooks
+## Mission
+Deliver a conversational, responsive surface for Donna’s AI agents. The web client must feel effortless on desktop + mobile, hide auth complexity, and showcase the signature capture experiences.
 
 ## Project Structure
 ```
@@ -38,66 +32,25 @@ frontend/
 └── public/                    # Static assets
 ```
 
-## Key Configurations
-
-### Environment Variables (.env.local)
-```bash
-NEXT_PUBLIC_SUPABASE_URL=https://vhyvpbdtfwjqruckbjbn.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-NEXT_PUBLIC_API_URL=http://localhost:8000
+## Directory Highlights
+```
+app/          # Routes, layouts, server actions
+components/   # UI primitives + interactive surfaces (see components/AGENTS.md)
+lib/          # API client, Supabase helpers, utilities
+middleware.ts # Route protection + session refresh
+tests/        # Vitest + Playwright suites
 ```
 
-### Authentication Flow
-1. User clicks "Sign in with Google" → triggers `signInWithGoogle()` Server Action
-2. Supabase redirects to Google OAuth → user approves
-3. Google redirects to `/auth/callback?code=...`
-4. Callback exchanges code for session → stores in httpOnly cookies
-5. Middleware validates session on every request → redirects to `/login` if invalid
-6. Protected pages use `getUser()` to check auth status
+## Runtime Flows
+- **Auth:** `app/actions/auth.ts` issues Supabase login, `/auth/callback` exchanges OAuth codes, and `middleware.ts` guards all routes except `/login` + static assets.
+- **Data access:** `lib/api/client.ts` injects Supabase JWTs into backend requests; hooks in `lib/api/hooks.ts` wrap TanStack Query for user/session data.
+- **Providers:** `app/layout.tsx` registers the QueryProvider plus global styles; client components remain lightweight.
 
-### API Integration
-```typescript
-// Auto-injected JWT from Supabase session
-import { api } from '@/lib/api/client';
-const data = await api.get('/api/v1/endpoint');
+## Development Notes
+- `pnpm dev` to run Next.js locally, `pnpm lint` / `pnpm test` / `pnpm test:e2e` for quality gates.
+- Environment variables live in `.env.local` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_URL`).
+- Keep new interactive patterns documented under `frontend/components/AGENTS.md` so this file stays high level.
 
-// TanStack Query hooks
-import { useCurrentUser } from '@/lib/api/hooks';
-const { data, isLoading } = useCurrentUser();
-```
 
-### Route Protection
-- **Middleware** (`middleware.ts`): Validates Supabase session, redirects unauthenticated users
-- **Matcher**: Protects all routes except `/login`, `/auth/*`, static files
-- **Server Components**: Use `getUser()` for double-check before rendering
-
-### Testing
-- **Unit**: Vitest + Testing Library (happy-dom) → `pnpm test`
-- **E2E**: Playwright (Chromium) → `pnpm test:e2e`
-- **Mocking**: MSW handlers in `mocks/handlers.ts`
-
-### Code Quality
-- **Pre-commit**: Husky runs ESLint + Prettier on staged files
-- **Format**: `pnpm format` (Prettier with import sorting + Tailwind class sorting)
-- **Type-check**: `pnpm type-check` (strict mode enforced)
-
-## Component Installation (shadcn/ui)
-```bash
-pnpm dlx shadcn@latest add button  # Installs to components/ui/button.tsx
-```
-
-## Development Commands
-```bash
-pnpm dev              # Start dev server (localhost:3000)
-pnpm build            # Production build
-pnpm lint             # Check code quality
-pnpm format           # Auto-fix formatting
-pnpm test             # Run unit tests
-pnpm test:e2e         # Run E2E tests
-```
-
-## Important Notes
-- **SSR Auth**: All auth code uses `@supabase/ssr` for cookie-based sessions
-- **API Client**: Auto-refreshes Supabase token and injects into Authorization header
-- **Monorepo**: Part of pnpm workspace (root manages deps, frontend has symlinks)
-- **No Server Actions in Client Components**: Use Server Actions from Server Components only
+IMPORTANT NOTE:
+After any important change to the frontend, make sure to update this file appropriately.
