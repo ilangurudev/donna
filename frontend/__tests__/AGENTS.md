@@ -22,8 +22,7 @@ pnpm test:e2e                # E2E tests
 frontend/
 ├── __tests__/                          # Unit/integration tests (mirrors src/)
 │   ├── components/                     # Component tests
-│   │   ├── voice-recorder.test.tsx     # Example: Complex component with media APIs
-│   │   ├── user-info.test.tsx          # Example: Simple component with API
+│   │   ├── glowy-orb.test.tsx          # Example: Complex component with media APIs, UI state, and greeting
 │   │   └── providers/query-provider.test.tsx
 │   ├── lib/api/                        # Business logic tests
 │   │   ├── client.test.ts              # API client tests
@@ -215,6 +214,44 @@ describe('VoiceRecorder', () => {
 });
 ```
 
+### Pattern 4: Testing UI Text and Conditional Rendering
+
+Test components that render different content based on props or state (see `glowy-orb.test.tsx`):
+
+```typescript
+describe('Greeting Message', () => {
+  it('should display greeting message without firstName', () => {
+    renderWithProviders(<GlowyOrb />);
+    const greeting = screen.getByText(/welcome to Donna!/i);
+    expect(greeting).toBeInTheDocument();
+  });
+
+  it('should display greeting message with firstName', () => {
+    renderWithProviders(<GlowyOrb firstName="Alice" />);
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading.textContent).toContain('Alice');
+    expect(heading.textContent).toContain('welcome to Donna!');
+  });
+
+  it('should display one of the valid greetings', () => {
+    const VALID_GREETINGS = ['Hello', 'Hola', 'Bonjour', 'Ciao'];
+    const { container } = renderWithProviders(<GlowyOrb />);
+
+    const heading = container.querySelector('h1');
+    const hasValidGreeting = VALID_GREETINGS.some(greeting =>
+      heading?.textContent?.includes(greeting)
+    );
+    expect(hasValidGreeting).toBe(true);
+  });
+});
+```
+
+**Key techniques**:
+- Test with and without optional props
+- Use `.textContent` for elements with nested components
+- Test randomized/dynamic content with arrays of valid values
+- Verify accessibility with semantic queries (`getByRole('heading', { level: 1 })`)
+
 ## Testing Library Queries
 
 ### Query Priority (Recommended Order)
@@ -353,10 +390,16 @@ describe('VoiceRecorder', () => {
 ```typescript
 // ❌ BAD: Implementation details
 expect(wrapper.state().isLoading).toBe(false);
+expect(container).toBeInTheDocument(); // Too vague - doesn't test anything specific
+expect(container.querySelector('[class*="rotate"]')).toBeTruthy(); // Testing CSS implementation
 
 // ✅ GOOD: User-observable behavior
 expect(screen.queryByText('Loading')).not.toBeInTheDocument();
+expect(screen.getByRole('button', { name: /submit/i })).toBeInTheDocument();
+expect(screen.getByText('Hello Alice, welcome to Donna!')).toBeInTheDocument();
 ```
+
+**Avoid "smoke tests" that just check if something exists without testing actual functionality.** Tests should verify that the component does what users expect, not just that it renders without crashing.
 
 ### 2. Use Semantic Queries
 ```typescript

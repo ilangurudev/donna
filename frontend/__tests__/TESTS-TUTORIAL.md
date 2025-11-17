@@ -746,6 +746,50 @@ it('should have accessible voice recorder button', () => {
 - Enforces semantic HTML (buttons should be `<button>`, not `<div>`)
 - Tests keyboard navigation (can you tab to it?)
 
+### Pattern 7: Testing UI Text and Conditional Rendering
+
+**Test**: Does the component display different content based on props or state?
+
+Example from `glowy-orb.test.tsx`:
+
+```typescript
+describe('Greeting Message', () => {
+  it('should display greeting message without firstName', () => {
+    renderWithProviders(<GlowyOrb />);
+    const greeting = screen.getByText(/welcome to Donna!/i);
+    expect(greeting).toBeInTheDocument();
+  });
+
+  it('should display greeting message with firstName', () => {
+    renderWithProviders(<GlowyOrb firstName="Alice" />);
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading.textContent).toContain('Alice');
+    expect(heading.textContent).toContain('welcome to Donna!');
+  });
+
+  it('should display one of the valid greetings', () => {
+    const VALID_GREETINGS = ['Hello', 'Hola', 'Bonjour', 'Ciao'];
+    const { container } = renderWithProviders(<GlowyOrb />);
+
+    const heading = container.querySelector('h1');
+    const hasValidGreeting = VALID_GREETINGS.some(greeting =>
+      heading?.textContent?.includes(greeting)
+    );
+    expect(hasValidGreeting).toBe(true);
+  });
+});
+```
+
+**Key techniques**:
+- Test both with and without optional props
+- Use `.textContent` when elements have nested components
+- Test randomized/dynamic content using arrays of valid values
+- Always use semantic queries when possible (`getByRole`, not selectors)
+
+**When to use `.textContent` vs `getByText`**:
+- `getByText()` - When the entire text is in one element
+- `.textContent` - When text is split across multiple child elements (e.g., `<h1>Hello <span>Alice</span></h1>`)
+
 ---
 
 ## The Mocking System Deep Dive
@@ -1374,16 +1418,17 @@ describe('UserInfo', () => {
 - Use `waitFor()` for async data
 - Override MSW handlers to test errors
 
-### Example 2: Complex Component Test (`voice-recorder.test.tsx`)
+### Example 2: Complex Component Test (`glowy-orb.test.tsx`)
 
-**Component**: `components/voice-recorder.tsx` (voice recording with glowy orb)
+**Component**: `components/glowy-orb.tsx` (voice recording interface with animated orb and greeting)
 
 **Challenges**:
 - Uses `getUserMedia()` (microphone access)
 - Uses `MediaRecorder` (audio recording)
 - Uses `AudioContext` (audio visualization)
-- Has complex mouse interactions (press & hold)
+- Has complex mouse/touch/keyboard interactions (press & hold)
 - Uploads data to API
+- Has randomized UI state (greeting selection)
 
 **Test**:
 
@@ -1393,9 +1438,9 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@/__tests__/utils/test-utils';
 import { setupMediaDeviceMocks } from '@/__tests__/utils/mock-media-devices';
-import { VoiceRecorder } from '@/components/voice-recorder';
+import { GlowyOrb } from '@/components/glowy-orb';
 
-describe('VoiceRecorder', () => {
+describe('GlowyOrb', () => {
   let mocks: ReturnType<typeof setupMediaDeviceMocks>;
 
   beforeEach(() => {
@@ -1404,21 +1449,21 @@ describe('VoiceRecorder', () => {
   });
 
   describe('Rendering', () => {
-    it('should render the voice recorder button', () => {
-      renderWithProviders(<VoiceRecorder />);
+    it('should render the glowy orb button', () => {
+      renderWithProviders(<GlowyOrb />);
 
       const button = screen.getByRole('button', {
-        name: /voice recorder/i
+        name: /hold to speak/i
       });
       expect(button).toBeInTheDocument();
     });
 
-    it('should display glowy orb', () => {
-      renderWithProviders(<VoiceRecorder />);
+    it('should display greeting message', () => {
+      renderWithProviders(<GlowyOrb firstName="Alice" />);
 
-      // Orb is a canvas element
-      const canvas = screen.getByRole('img', { hidden: true });
-      expect(canvas).toBeInTheDocument();
+      const heading = screen.getByRole('heading', { level: 1 });
+      expect(heading.textContent).toContain('Alice');
+      expect(heading.textContent).toContain('welcome to Donna!');
     });
   });
 
@@ -1426,10 +1471,10 @@ describe('VoiceRecorder', () => {
     it('should start recording on mouse down', async () => {
       // ARRANGE
       const user = userEvent.setup({ delay: null });
-      renderWithProviders(<VoiceRecorder />);
+      renderWithProviders(<GlowyOrb />);
 
       const button = screen.getByRole('button', {
-        name: /voice recorder/i
+        name: /hold to speak/i
       });
 
       // ACT: Mouse down (press and hold)
@@ -1451,10 +1496,10 @@ describe('VoiceRecorder', () => {
 
     it('should stop recording on mouse up', async () => {
       const user = userEvent.setup({ delay: null });
-      renderWithProviders(<VoiceRecorder />);
+      renderWithProviders(<GlowyOrb />);
 
       const button = screen.getByRole('button', {
-        name: /voice recorder/i
+        name: /hold to speak/i
       });
 
       // Start recording
@@ -1477,10 +1522,10 @@ describe('VoiceRecorder', () => {
 
     it('should upload recording after stopping', async () => {
       const user = userEvent.setup({ delay: null });
-      renderWithProviders(<VoiceRecorder />);
+      renderWithProviders(<GlowyOrb />);
 
       const button = screen.getByRole('button', {
-        name: /voice recorder/i
+        name: /hold to speak/i
       });
 
       // Start recording
@@ -1508,10 +1553,10 @@ describe('VoiceRecorder', () => {
       );
 
       const user = userEvent.setup({ delay: null });
-      renderWithProviders(<VoiceRecorder />);
+      renderWithProviders(<GlowyOrb />);
 
       const button = screen.getByRole('button', {
-        name: /voice recorder/i
+        name: /hold to speak/i
       });
 
       // ACT: Try to start recording
@@ -1532,11 +1577,11 @@ describe('VoiceRecorder', () => {
       const user = userEvent.setup({ delay: null });
 
       renderWithProviders(
-        <VoiceRecorder onUploadError={onUploadError} />
+        <GlowyOrb onUploadError={onUploadError} />
       );
 
       const button = screen.getByRole('button', {
-        name: /voice recorder/i
+        name: /hold to speak/i
       });
 
       // Start and stop recording
@@ -1558,10 +1603,10 @@ describe('VoiceRecorder', () => {
 
   describe('Accessibility', () => {
     it('should have accessible button with label', () => {
-      renderWithProviders(<VoiceRecorder />);
+      renderWithProviders(<GlowyOrb />);
 
       const button = screen.getByRole('button', {
-        name: /voice recorder/i
+        name: /hold to speak/i
       });
 
       expect(button).toHaveAttribute('aria-label');
@@ -1569,10 +1614,10 @@ describe('VoiceRecorder', () => {
 
     it('should announce recording state to screen readers', async () => {
       const user = userEvent.setup({ delay: null });
-      renderWithProviders(<VoiceRecorder />);
+      renderWithProviders(<GlowyOrb />);
 
       const button = screen.getByRole('button', {
-        name: /voice recorder/i
+        name: /hold to speak/i
       });
 
       // Start recording
