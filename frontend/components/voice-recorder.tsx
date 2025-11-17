@@ -1,20 +1,40 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 
 import { uploadVoiceRecording } from "@/lib/api-client";
 
 interface VoiceRecorderProps {
+  userName?: string;
   onRecordingComplete?: (audioBlob: Blob) => void;
   onUploadSuccess?: (response: { filename?: string; size?: number }) => void;
   onUploadError?: (error: Error) => void;
 }
 
+const GREETINGS = [
+  "Hello",
+  "Hola",
+  "Bonjour",
+  "Ciao",
+  "Hallo",
+  "Olá",
+  "Namaste",
+  "Konnichiwa",
+  "Salaam",
+  "Shalom",
+];
+
 export function VoiceRecorder({
+  userName,
   onRecordingComplete,
   onUploadSuccess,
   onUploadError,
 }: VoiceRecorderProps) {
+  // Randomly select a greeting on component mount
+  const greeting = useMemo(
+    () => GREETINGS[Math.floor(Math.random() * GREETINGS.length)],
+    [],
+  );
   const [isRecording, setIsRecording] = useState(false);
   const [isHolding, setIsHolding] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
@@ -152,6 +172,13 @@ export function VoiceRecorder({
 
   return (
     <div className="flex min-h-[500px] flex-col items-center justify-center">
+      {/* Greeting */}
+      {userName && (
+        <h1 className="mb-12 text-6xl font-extralight tracking-wide text-white drop-shadow-lg">
+          {greeting} {userName}
+        </h1>
+      )}
+
       {/* Orb container */}
       <div className="relative flex items-center justify-center animate-float">
         {/* Outer glow rings - always visible, more intense when recording */}
