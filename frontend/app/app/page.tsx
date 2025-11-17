@@ -11,6 +11,13 @@ export default async function AppPage() {
     redirect("/login");
   }
 
+  // Extract first name from user metadata or email
+  const firstName =
+    user.user_metadata?.first_name ||
+    user.user_metadata?.name?.split(" ")[0] ||
+    user.email?.split("@")[0] ||
+    "there";
+
   return (
     <div className="min-h-screen bg-neutral-50">
       <header className="border-b border-neutral-200 bg-white">
@@ -32,16 +39,9 @@ export default async function AppPage() {
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Voice Capture Section */}
-        <div className="rounded-lg bg-gradient-to-br from-neutral-50 to-neutral-100 p-8 shadow-lg">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold text-neutral-900">Voice Capture</h2>
-            <p className="mt-3 text-lg text-neutral-600">
-              Capture your thoughts, tasks, and ideas naturally with your voice
-            </p>
-          </div>
-
+        <div className="rounded-lg bg-gradient-to-br from-neutral-800 via-neutral-900 to-black p-8 shadow-lg">
           <div className="mt-8">
-            <VoiceRecorder />
+            <VoiceRecorder userName={firstName} />
           </div>
         </div>
 
