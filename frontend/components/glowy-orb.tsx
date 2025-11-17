@@ -201,9 +201,9 @@ export function GlowyOrb({
   const pulseScale = isRecording ? 1 + audioLevel * 0.15 : 1;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
+    <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
       {/* Greeting message */}
-      <div className="mb-16 text-center">
+      <div className="mt-[15vh] mb-[20vh] text-center">
         <h1 className="text-6xl font-light tracking-wide text-white">
           {greeting} {firstName && <span className="font-normal">{firstName}</span>}
           {firstName && ", "}welcome to Donna!
