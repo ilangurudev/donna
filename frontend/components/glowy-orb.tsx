@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 
 import { uploadVoiceRecording } from "@/lib/api-client";
 
@@ -29,9 +29,11 @@ export function GlowyOrb({
   onUploadSuccess,
   onUploadError,
 }: GlowyOrbProps) {
-  // Randomly select a greeting on component mount
-  const greeting = useMemo(() => {
-    return GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+  // Randomly select a greeting on client-side only to avoid hydration mismatch
+  const [greeting, setGreeting] = useState<string>("Hello");
+
+  useEffect(() => {
+    setGreeting(GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
   }, []);
 
   const [isRecording, setIsRecording] = useState(false);
@@ -203,7 +205,7 @@ export function GlowyOrb({
   return (
     <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
       {/* Greeting message */}
-      <div className="mt-[15vh] mb-[20vh] text-center">
+      <div className="mt-[25vh] mb-[15vh] text-center">
         <h1 className="text-6xl font-light tracking-wide text-white">
           {greeting} {firstName && <span className="font-normal">{firstName}</span>}
           {firstName && ", "}welcome to Donna!
